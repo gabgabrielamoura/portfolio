@@ -1161,6 +1161,9 @@ html.has-cursor, html.has-cursor * { cursor: none !important; }
 html.has-cursor .dock-sep, html.has-cursor .dock-sep::before, html.has-cursor.resizing, html.has-cursor.resizing * { cursor: ns-resize !important; }
 .cursor.native { opacity: 0 !important; }
 
+.rv { opacity: 0; translate: 0 22px; transition: opacity .55s ease, translate .65s cubic-bezier(.2, .8, .2, 1); }
+.rv.rv-in { opacity: 1; translate: 0 0; }
+.case.editing .rv { opacity: 1; translate: none; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
@@ -1203,7 +1206,7 @@ html.has-cursor .dock-sep, html.has-cursor .dock-sep::before, html.has-cursor.re
     </h1>
     <p class="role enter" style="--d: .45s">UX/UI &amp; Product Designer</p>
     <p class="headline enter" style="--d: .55s">Interfaces simples para problemas complexos.</p>
-    <p class="pitch enter" style="--d: .65s">Produtos digitais e plataformas B2B que conectam pessoas e processos.</p>
+    <p class="pitch enter" style="--d: .65s">Produtos digitais e plataformas B2B.</p>
     <div class="photo-wrap enter" style="--d: .75s">
       <div class="photo"><img src="assets/gabriela.jpg" alt="Foto de Gabriela Moura"></div>
       <svg class="photo-ring" viewBox="0 0 250 250" aria-hidden="true"><path d="M128 8 C192 6 244 58 242 124 C240 190 190 242 124 241 C58 240 8 190 9 126 C10 60 60 9 136 11" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/></svg>
@@ -2111,6 +2114,18 @@ html.has-cursor .dock-sep, html.has-cursor .dock-sep::before, html.has-cursor.re
     ['Testar', '[testes com usuários e o que mudou depois]'],
   ];
   const fm = $('#finderMain');
+  /* ---------- scroll reveal: text and images rise in as they enter the window ---------- */
+  const RV_SEL = ['.proj-group > .proj-ghead', '.proj-group > .proj-gdesc', '.proj', '.feat-card', '.case section > *:not(.b2b-shots):not(.b2b-phones):not(.phones):not(.feat-grid)', '.b2b-shots > button', '.b2b-phones > button', '.phones > *', '.notes > *'].join(',');
+  function reveal(root, scroller) {
+    if (reduce || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver(entries => {
+      let k = 0;
+      entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left)
+        .forEach(e => { e.target.style.transitionDelay = Math.min(k++, 6) * 70 + 'ms'; e.target.classList.add('rv-in'); io.unobserve(e.target); });
+    }, { root: scroller, rootMargin: '0px 0px -6% 0px', threshold: 0.08 });
+    $$(RV_SEL, root).forEach(el => { if (el.classList.contains('rv')) return; if (el.closest('.case-nav')) return; el.classList.add('rv'); io.observe(el); });
+  }
+  new MutationObserver(() => reveal(fm, fm)).observe(fm, { childList: true });
   let filter = 'todos';
   const areas = [
     ['ux', 'UX/UI', 'Interfaces de sistemas web e mobile.'],
@@ -2513,7 +2528,7 @@ html.has-cursor .dock-sep, html.has-cursor .dock-sep::before, html.has-cursor.re
   /* ---------- Tree Earth case study — from Gabriela's internship report and Figma file ---------- */
   const teScreens = {
     hero: [['te-home.jpg', 'Home', 'Atalhos para todas as funções e conteúdo da Academy.']],
-    final: [['te-login.jpg', 'Abertura', 'Identidade nova, com a marca no centro.'], ['te-home.jpg', 'Home', 'Atalhos em grade, voucher no topo e navegação fixa embaixo.'], ['te-novo-plantio.jpg', 'Novo plantio', 'Local, espécie, descrição e foto numa tela só.'], ['te-lista.jpg', 'Meus plantios', 'Lista com status, seleção em lote e envio.'], ['te-mapa.jpg', 'Mapa', 'Os plantios por satélite.'], ['te-detalhe.jpg', 'Detalhe do plantio', 'Espécie, área, GPS, bioma e atualizações.'], ['te-presente.jpg', 'Presente', 'Escolher o cartão e enviar a árvore de presente.'], ['te-loja.jpg', 'Loja', 'Planos mensais e compra única.'], ['te-estatisticas.jpg', 'Estatísticas', 'Árvores e CO₂ do perfil.']],
+    final: [['te-login.jpg', 'Abertura', 'Identidade nova, com a marca no centro.'], ['te-home.jpg', 'Home', 'Atalhos em grade, voucher no topo e navegação fixa embaixo.'], ['te-novo-plantio.jpg', 'Novo plantio', 'Local, espécie, descrição e foto numa tela só.'], ['te-lista.jpg', 'Meus plantios', 'Lista com status, seleção em lote e envio.'], ['te-mapa.jpg', 'Mapa', 'Os plantios por satélite.'], ['te-detalhe.jpg', 'Detalhe do plantio', 'Espécie, área, GPS, bioma e atualizações.']],
     ba1: [['te-old-login.jpg', 'Antes: login'], ['te-login.jpg', 'Depois: abertura']],
     ba2: [['te-old-plantios.jpg', 'Antes: meus plantios'], ['te-lista.jpg', 'Depois: meus plantios']],
     ba3: [['te-old-menu.jpg', 'Antes: menu lateral'], ['te-home.jpg', 'Depois: home']],
@@ -3059,6 +3074,7 @@ html.has-cursor .dock-sep, html.has-cursor .dock-sep::before, html.has-cursor.re
     if (caseAutoMax) { win.classList.remove('max'); caseAutoMax = false; }
     _grid();
   };
+  reveal($('#win-estudos .notes'), $('#win-estudos .win-body'));
   $('#homeBtn').addEventListener('click', () => { $$('.win').forEach(w => { if (!w.hidden) closeWin(w); }); $('.hero .cta')?.focus({ preventScroll: true }); });
   const sideCur = b => $$('#win-projetos .side-btn').forEach(x => x.setAttribute('aria-current', x === b ? 'true' : 'false'));
   $$('[data-case]').forEach(b => b.addEventListener('click', () => { sideCur(b); caseView(b.dataset.case); }));
